@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#2a2a2a;--border2:#333;
+  --text:#f0f0f0;--text2:#999;--text3:#555;
+  --white:#fff;--black:#000;
+  --danger:#e05555;--success:#4caf80;
+  --radius:8px;--radius-lg:14px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.screen{display:none;width:100%;max-width:420px;flex-direction:column;align-items:center}
+.screen.active{display:flex}
+#screen-app{max-width:680px;min-height:100vh;display:none;flex-direction:column;width:100%}
+#screen-app.active{display:flex}
+
+.logo{text-align:center;margin-bottom:1.75rem}
+.logo-icon{width:52px;height:52px;background:var(--white);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px}
+.logo h1{font-size:22px;font-weight:600;letter-spacing:-.3px}
+.logo p{font-size:13px;color:var(--text2);margin-top:3px}
+
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.75rem 1.5rem;width:100%}
+
+label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;margin-top:1.1rem}
+label:first-of-type{margin-top:0}
+
+input[type=password],input[type=text],input[type=email]{
+  width:100%;height:44px;background:var(--bg);border:1px solid var(--border2);
+  border-radius:var(--radius);color:var(--text);font-size:15px;padding:0 14px;
+  outline:none;transition:border-color .15s;font-family:inherit
+}
+input:focus{border-color:var(--white)}
+
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:44px}
+.eye{position:absolute;right:0;top:0;width:44px;height:44px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:17px;display:flex;align-items:center;justify-content:center}
+.eye:hover{color:var(--text2)}
+
+.btn-main{margin-top:1.25rem;width:100%;height:44px;background:var(--white);border:none;border-radius:var(--radius);color:var(--black);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .08s;letter-spacing:-.1px}
+.btn-main:hover{opacity:.88}
+.btn-main:active{transform:scale(.98)}
+.btn-main.danger{background:var(--danger);color:#fff}
+.btn-main.sm{height:36px;font-size:13px;margin-top:.5rem}
+
+.err{background:#1a0a0a;border:1px solid var(--danger);border-radius:var(--radius);color:var(--danger);font-size:13px;padding:10px 14px;margin-bottom:1rem;display:none}
+.ok-msg{background:#0a1a0f;border:1px solid var(--success);border-radius:var(--radius);color:var(--success);font-size:13px;padding:10px 14px;margin-bottom:1rem;display:none}
+
+.link-btn{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:0;margin-top:.75rem;display:block;text-align:center}
+.link-btn:hover{color:var(--text2)}
+
+.strength-bar{height:3px;background:var(--border2);border-radius:2px;margin-top:7px;overflow:hidden}
+.strength-fill{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0%}
+.strength-lbl{font-size:11px;color:var(--text3);margin-top:4px}
+
+.step-badge{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.screen-title{font-size:20px;font-weight:600;margin-bottom:4px}
+.screen-sub{font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.5}
+
+.topbar{background:var(--surface);border-bottom:1px solid var(--border2);padding:0 1.25rem;height:54px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.tb-logo{font-weight:700;font-size:15px;display:flex;align-items:center;gap:7px}
+.tb-logo span{font-size:20px}
+.tb-space{flex:1}
+.tb-pill{font-size:11px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 11px}
+.btn-sm-ui{height:30px;padding:0 12px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-sm-ui:hover{background:var(--surface2);color:var(--text)}
+.btn-sm-ui.red:hover{background:#1a0a0a;color:var(--danger);border-color:var(--danger)}
+
+.sync-indicator{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--success);flex-shrink:0}
+.sync-dot.syncing{background:#c09030;animation:pulse 1s infinite}
+.sync-dot.error{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.app-body{max-width:680px;margin:0 auto;width:100%;padding:1.5rem 1rem 4rem}
+
+.add-panel{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.5rem}
+.add-panel-header{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem}
+.add-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.add-grid .full{grid-column:1/-1}
+.add-actions{display:flex;gap:8px;margin-top:.75rem}
+.add-actions button{flex:1;height:36px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid var(--border2);transition:all .15s}
+.btn-add-gen{background:var(--surface2);color:var(--text2)}
+.btn-add-gen:hover{background:var(--border2);color:var(--text)}
+.btn-add-save{background:var(--white);color:var(--black);border-color:transparent}
+.btn-add-save:hover{opacity:.88}
+
+.search-row{margin-bottom:1rem}
+.search-row input{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;height:38px;padding:0 14px 0 36px;width:100%;outline:none;font-family:inherit}
+.search-row input:focus{border-color:var(--white)}
+.search-wrap{position:relative}
+.search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none}
+
+.entries-list{display:flex;flex-direction:column;gap:6px}
+.entry{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:14px 16px;display:flex;align-items:center;gap:12px;transition:border-color .15s}
+.entry:hover{border-color:var(--border2)}
+.avatar{width:38px;height:38px;border-radius:10px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);flex-shrink:0;letter-spacing:.5px}
+.entry-info{flex:1;min-width:0}
+.entry-site{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry-user{font-size:12px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry-pw{font-size:12px;color:var(--text3);margin-top:2px;font-family:monospace;letter-spacing:.5px}
+.entry-pw.shown{color:var(--text2)}
+.entry-btns{display:flex;gap:4px;flex-shrink:0}
+.ic-btn{width:30px;height:30px;background:transparent;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text3)}
+.ic-btn:hover{background:var(--surface2);border-color:var(--border2);color:var(--text)}
+.ic-btn.del:hover{background:#1a0a0a;border-color:var(--danger);color:var(--danger)}
+
+.edit-inputs{display:flex;flex-direction:column;gap:5px;flex:1}
+.edit-inputs input{height:32px;font-size:13px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:0 10px;outline:none;font-family:inherit}
+.edit-inputs input:focus{border-color:var(--white)}
+
+.empty{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.empty-ico{font-size:36px;margin-bottom:12px}
+.empty p{font-size:14px;line-height:1.6}
+
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(10px);background:var(--white);color:var(--black);font-size:13px;font-weight:600;padding:10px 20px;border-radius:20px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.divider{display:flex;align-items:center;gap:10px;margin:1rem 0}
+.divider hr{flex:1;border:none;border-top:1px solid var(--border)}
+.divider span{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+.add-actions-btn{flex:1;height:36px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid var(--border2);transition:all .15s}
+
+.tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:4px}
+.tab-btn{flex:1;height:34px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--text3);transition:all .15s}
+.tab-btn.active{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.tab-btn:hover:not(.active){color:var(--text2)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 14px;outline:none;transition:border-color .15s;font-family:inherit;resize:vertical;line-height:1.5}
+textarea:focus{border-color:var(--white)}
+.note-entry{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:14px 16px;display:flex;align-items:flex-start;gap:12px;transition:border-color .15s}
+.note-entry:hover{border-color:var(--border2)}
+.note-avatar{width:38px;height:38px;border-radius:10px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.note-info{flex:1;min-width:0}
+.note-title{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-preview{font-size:12px;color:var(--text3);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.note-preview.expanded{display:block;-webkit-line-clamp:unset;color:var(--text2)}
+.note-btns{display:flex;gap:4px;flex-shrink:0}
+.note-edit-area{display:flex;flex-direction:column;gap:6px;flex:1}
+.note-edit-area input{height:32px;font-size:13px;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:0 10px;outline:none;font-family:inherit}
+.note-edit-area input:focus{border-color:var(--white)}
+.note-edit-area textarea{font-size:13px;min-height:80px}
+
+#screen-settings{max-width:680px;min-height:100vh;display:none;flex-direction:column;width:100%}
+#screen-settings.active{display:flex}
+.settings-topbar{background:var(--surface);border-bottom:1px solid var(--border2);padding:0 1.25rem;height:54px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.settings-body{max-width:680px;margin:0 auto;width:100%;padding:1.5rem 1rem 4rem}
+.settings-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.25rem}
+.settings-card-title{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem}
+.theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.theme-opt{border:2px solid var(--border2);border-radius:var(--radius-lg);padding:10px 8px;cursor:pointer;text-align:center;transition:all .15s;background:transparent}
+.theme-opt:hover{border-color:var(--text3)}
+.theme-opt.selected{border-color:var(--white)}
+.theme-swatch{width:100%;height:32px;border-radius:6px;margin-bottom:6px;display:flex;gap:4px;overflow:hidden}
+.theme-swatch span{flex:1;display:block}
+.theme-label{font-size:11px;font-weight:600;color:var(--text2)}
+.tb-gear{width:30px;height:30px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text3)}
+.tb-gear:hover{background:var(--surface2);color:var(--text)}
+.tb-avatar{width:30px;height:30px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);overflow:hidden;flex-shrink:0}
+</style>
+
+<h2 class="sr-only">Cofre de Senhas — com sincronização na nuvem</h2>
+
+<!-- SETUP -->
+<div class="screen active" id="screen-setup">
+  <div class="logo">
+    <div class="logo-icon">🔐</div>
+    <h1>Cofre de Senhas</h1>
+    <p>Configure seu cofre pela primeira vez</p>
+  </div>
+  <div class="card" style="width:100%">
+    <div class="step-badge">Configuração inicial</div>
+    <div class="screen-title">Criar seu cofre</div>
+    <div class="screen-sub">Sua senha mestra protege todas as outras. Guarde-a bem — não há como recuperar sem ela.</div>
+    <div id="setup-err" class="err"></div>
+    <label>Seu nome</label>
+    <input type="text" id="s-name" placeholder="Como quer ser chamado?" autocomplete="off">
+    <label>Senha mestra</label>
+    <div class="pw-wrap">
+      <input type="password" id="s-pw1" placeholder="Mínimo 6 caracteres" oninput="chkStr(this.value)">
+      <button class="eye" onclick="toggleEye('s-pw1',this)">👁</button>
+    </div>
+    <div class="strength-bar"><div class="strength-fill" id="s-fill"></div></div>
+    <div class="strength-lbl" id="s-lbl">Digite uma senha para ver a força</div>
+    <label>Confirmar senha</label>
+    <div class="pw-wrap">
+      <input type="password" id="s-pw2" placeholder="Repita a senha">
+      <button class="eye" onclick="toggleEye('s-pw2',this)">👁</button>
+    </div>
+    <div class="divider"><hr><span>Recuperação</span><hr></div>
+    <div class="screen-sub" style="margin-bottom:.5rem;font-size:12px">Caso esqueça sua senha, esta resposta secreta permite criar uma nova.</div>
+    <label>Pergunta secreta</label>
+    <input type="text" id="s-question" placeholder="Ex: Nome do seu primeiro pet?" autocomplete="off">
+    <label>Resposta secreta</label>
+    <input type="text" id="s-answer" placeholder="Resposta (não diferencia maiúsculas)" autocomplete="off">
+    <button class="btn-main" onclick="doSetup()" style="margin-top:1.5rem">Criar cofre</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="screen-login">
+  <div class="logo">
+    <div class="logo-icon">🔐</div>
+    <h1 id="login-title">Bem-vindo de volta</h1>
+    <p id="login-sub">Digite sua senha mestra para entrar</p>
+  </div>
+  <div class="card" style="width:100%">
+    <div id="login-err" class="err"></div>
+    <label>Senha mestra</label>
+    <div class="pw-wrap">
+      <input type="password" id="l-pw" placeholder="Sua senha mestra" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="eye" onclick="toggleEye('l-pw',this)">👁</button>
+    </div>
+    <button class="btn-main" onclick="doLogin()">Entrar</button>
+    <button class="link-btn" onclick="showRecover()">Esqueci minha senha</button>
+  </div>
+</div>
+
+<!-- RECUPERAÇÃO -->
+<div class="screen" id="screen-recover">
+  <div class="logo">
+    <div class="logo-icon">🔑</div>
+    <h1>Recuperar acesso</h1>
+    <p>Responda sua pergunta secreta para redefinir a senha</p>
+  </div>
+  <div class="card" style="width:100%">
+    <div id="rec-err" class="err"></div>
+    <div id="rec-ok" class="ok-msg"></div>
+    <div id="rec-step1">
+      <label>Sua pergunta secreta</label>
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 14px;font-size:14px;color:var(--text2);margin-bottom:.75rem" id="rec-question-display"></div>
+      <label>Resposta</label>
+      <input type="text" id="rec-answer" placeholder="Digite sua resposta" autocomplete="off">
+      <button class="btn-main" onclick="checkAnswer()">Verificar resposta</button>
+    </div>
+    <div id="rec-step2" style="display:none">
+      <label>Nova senha mestra</label>
+      <div class="pw-wrap">
+        <input type="password" id="rec-pw1" placeholder="Nova senha" oninput="chkStrRec(this.value)">
+        <button class="eye" onclick="toggleEye('rec-pw1',this)">👁</button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="rec-fill"></div></div>
+      <div class="strength-lbl" id="rec-lbl">Digite uma nova senha</div>
+      <label>Confirmar nova senha</label>
+      <div class="pw-wrap">
+        <input type="password" id="rec-pw2" placeholder="Repita a nova senha">
+        <button class="eye" onclick="toggleEye('rec-pw2',this)">👁</button>
+      </div>
+      <button class="btn-main" onclick="doResetPassword()">Redefinir senha</button>
+    </div>
+    <button class="link-btn" onclick="showScreen('screen-login')">← Voltar ao login</button>
+  </div>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div id="screen-app">
+  <div class="topbar">
+    <div class="tb-logo"><span>🔐</span> Cofre</div>
+    <div class="tb-space"></div>
+    <div class="sync-indicator" id="sync-ind">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-txt">Sincronizado</span>
+    </div>
+    <span class="tb-pill" id="app-count">0 senhas</span>
+    <button class="btn-sm-ui" onclick="doSync()" title="Sincronizar com a nuvem">🔄</button>
+    <div class="tb-avatar" id="tb-avatar-btn" onclick="showSettings()" title="Configurações" style="cursor:pointer">👤</div>
+    <button class="tb-gear" onclick="showSettings()" title="Configurações">⚙️</button>
+    <button class="btn-sm-ui red" onclick="doLogout()">Sair</button>
+  </div>
+  <div class="app-body">
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-passwords" onclick="switchTab('passwords')">🔐 Senhas</button>
+      <button class="tab-btn" id="tab-notes" onclick="switchTab('notes')">📝 Notas</button>
+    </div>
+    <!-- ABA SENHAS -->
+    <div class="tab-pane active" id="pane-passwords">
+      <div class="add-panel">
+        <div class="add-panel-header">+ Nova senha</div>
+        <div class="add-grid">
+          <div class="full">
+            <label style="margin-top:0">Site / Serviço</label>
+            <input type="text" id="f-site" placeholder="google.com, Netflix…" autocomplete="off">
+          </div>
+          <div>
+            <label style="margin-top:0">Usuário / E-mail</label>
+            <input type="text" id="f-user" placeholder="seu@email.com" autocomplete="off">
+          </div>
+          <div>
+            <label style="margin-top:0">Senha</label>
+            <div class="pw-wrap">
+              <input type="password" id="f-pw" placeholder="••••••••" autocomplete="off">
+              <button class="eye" onclick="toggleEye('f-pw',this)">👁</button>
+            </div>
+          </div>
+        </div>
+        <div class="add-actions">
+          <button class="add-actions-btn btn-add-gen" onclick="genPw()">🎲 Gerar senha forte</button>
+          <button class="add-actions-btn btn-add-save" onclick="addEntry()">Salvar senha</button>
+        </div>
+      </div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <span class="search-ico">🔍</span>
+          <input type="text" placeholder="Buscar por site ou usuário…" oninput="renderEntries(this.value)">
+        </div>
+      </div>
+      <div class="entries-list" id="entries-list"></div>
+    </div>
+    <!-- ABA NOTAS -->
+    <div class="tab-pane" id="pane-notes">
+      <div class="add-panel">
+        <div class="add-panel-header">+ Nova nota</div>
+        <label style="margin-top:0">Título</label>
+        <input type="text" id="n-title" placeholder="Ex: Código do wi-fi, PIN do cartão…" autocomplete="off">
+        <label>Conteúdo</label>
+        <textarea id="n-body" rows="4" placeholder="Anote qualquer coisa: códigos, chaves, instruções…"></textarea>
+        <div class="add-actions" style="margin-top:.75rem">
+          <button class="add-actions-btn btn-add-save" onclick="addNote()">Salvar nota</button>
+        </div>
+      </div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <span class="search-ico">🔍</span>
+          <input type="text" placeholder="Buscar por título ou conteúdo…" oninput="renderNotes(this.value)">
+        </div>
+      </div>
+      <div class="entries-list" id="notes-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIGURAÇÕES -->
+<div id="screen-settings">
+  <div class="settings-topbar">
+    <div class="tb-logo"><span>⚙️</span> Configurações</div>
+    <div class="tb-space"></div>
+    <button class="btn-sm-ui" onclick="showApp()">← Voltar</button>
+  </div>
+  <div class="settings-body">
+    <div class="settings-card">
+      <div class="settings-card-title">👤 Perfil</div>
+      <label style="margin-top:0">Nome de exibição</label>
+      <input type="text" id="cfg-name" placeholder="Seu nome" autocomplete="off">
+      <button class="btn-main" onclick="saveProfile()" style="margin-top:1rem">Salvar perfil</button>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">🎨 Tema</div>
+      <div class="theme-grid" id="theme-grid"></div>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">☁️ Sincronização</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">Suas senhas são criptografadas com AES antes de ir para a nuvem. Ninguém consegue ler sem sua senha mestra.</p>
+      <button class="btn-main" onclick="doSync();showApp()">🔄 Sincronizar agora</button>
+    </div>
+    <div class="settings-card">
+      <div class="settings-card-title">🔏 Alterar senha mestra</div>
+      <div id="chg-err2" class="err"></div>
+      <div id="chg-ok2" class="ok-msg"></div>
+      <label style="margin-top:0">Senha atual</label>
+      <div class="pw-wrap">
+        <input type="password" id="chg-cur2" placeholder="Senha mestra atual">
+        <button class="eye" onclick="toggleEye('chg-cur2',this)">👁</button>
+      </div>
+      <label>Nova senha</label>
+      <div class="pw-wrap">
+        <input type="password" id="chg-new12" placeholder="Nova senha" oninput="chkStrChg2(this.value)">
+        <button class="eye" onclick="toggleEye('chg-new12',this)">👁</button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="chg-fill2"></div></div>
+      <div class="strength-lbl" id="chg-lbl2">Digite uma nova senha</div>
+      <label>Confirmar nova senha</label>
+      <div class="pw-wrap">
+        <input type="password" id="chg-new22" placeholder="Repita a nova senha">
+        <button class="eye" onclick="toggleEye('chg-new22',this)">👁</button>
+      </div>
+      <button class="btn-main" onclick="doChangePassword2()" style="margin-top:1rem">Salvar nova senha</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+<script>
+const MK='cofre_mk', NK='cofre_name', QK='cofre_q', AK='cofre_ak', TK='cofre_theme';
+const SUPABASE_URL='https://bbapapibhovtkhfabhik.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiYXBhcGliaG92dGtoZmFiaGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NjIxMzYsImV4cCI6MjA5ODMzODEzNn0.fsXRo5ETBCfYF3vbEPjzHFkl6fEwjUUMQWROZcBMWiE';
+const USER_ID='cofre_principal';
+
+let masterKey=null;
+let entries=[];
+let notes=[];
+
+/* ── CRYPTO ── */
+function aesEncrypt(data){return CryptoJS.AES.encrypt(JSON.stringify(data),masterKey).toString()}
+function aesDecrypt(c){try{const b=CryptoJS.AES.decrypt(c,masterKey);return JSON.parse(b.toString(CryptoJS.enc.Utf8))}catch{return null}}
+
+/* ── SUPABASE ── */
+async function sbGet(){
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/cofre?user_id=eq.${USER_ID}&select=*`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});
+    if(!r.ok)return null;
+    const rows=await r.json();
+    return rows.length?rows[0]:null;
+  }catch{return null}
+}
+async function sbUpsert(payload){
+  try{
+    const existing=await sbGet();
+    const url=existing?`${SUPABASE_URL}/rest/v1/cofre?user_id=eq.${USER_ID}`:`${SUPABASE_URL}/rest/v1/cofre`;
+    const r=await fetch(url,{
+      method:existing?'PATCH':'POST',
+      headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify(existing?{payload,updated_at:new Date().toISOString()}:{user_id:USER_ID,payload,updated_at:new Date().toISOString()})
+    });
+    return r.ok;
+  }catch{return false}
+}
+
+/* ── SYNC STATUS ── */
+function setSyncStatus(s){
+  const dot=document.getElementById('sync-dot');
+  const txt=document.getElementById('sync-txt');
+  dot.className='sync-dot'+(s==='syncing'?' syncing':s==='error'?' error':'');
+  txt.textContent=s==='syncing'?'Sincronizando…':s==='error'?'Erro de sync':'Sincronizado';
+}
+
+async function saveToCloud(){
+  setSyncStatus('syncing');
+  const payload=aesEncrypt({entries,notes});
+  const ok=await sbUpsert(payload);
+  setSyncStatus(ok?'ok':'error');
+  if(!ok)toast('⚠️ Erro ao salvar na nuvem');
+}
+
+async function loadFromCloud(){
+  setSyncStatus('syncing');
+  const row=await sbGet();
+  if(!row){setSyncStatus('ok');return false}
+  const data=aesDecrypt(row.payload);
+  if(!data){setSyncStatus('error');return false}
+  entries=data.entries||[];
+  notes=data.notes||[];
+  setSyncStatus('ok');
+  return true;
+}
+
+async function doSync(){
+  toast('🔄 Sincronizando…');
+  await loadFromCloud();
+  renderEntries();
+  renderNotes();
+  updateCount(entries.length);
+  toast('✅ Sincronizado!');
+}
+
+/* ── THEMES ── */
+const THEMES={
+  dark:{label:'Escuro',bg:'#0a0a0a',surface:'#111',surface2:'#1a1a1a',border:'#2a2a2a',border2:'#333',text:'#f0f0f0',text2:'#999',text3:'#555',swatches:['#0a0a0a','#111','#1a1a1a']},
+  darker:{label:'Preto',bg:'#000',surface:'#0a0a0a',surface2:'#111',border:'#1a1a1a',border2:'#222',text:'#fff',text2:'#888',text3:'#444',swatches:['#000','#0a0a0a','#111']},
+  slate:{label:'Ardósia',bg:'#0f1117',surface:'#161b27',surface2:'#1e2535',border:'#252d3d',border2:'#2e3a50',text:'#e8eaf0',text2:'#8890a0',text3:'#4a5468',swatches:['#0f1117','#161b27','#1e2535']},
+  blue:{label:'Azul',bg:'#050d1a',surface:'#0a1628',surface2:'#0f1f38',border:'#1a2e50',border2:'#1e3660',text:'#ddeeff',text2:'#6699cc',text3:'#335588',swatches:['#050d1a','#0a1628','#1e3660']},
+  green:{label:'Verde',bg:'#030f08',surface:'#071a0e',surface2:'#0c2414',border:'#133322',border2:'#1a4030',text:'#d0f0dc',text2:'#55aa77',text3:'#2a6644',swatches:['#030f08','#071a0e','#1a4030']},
+  purple:{label:'Roxo',bg:'#0a0514',surface:'#110a1e',surface2:'#180f2a',border:'#281838',border2:'#341f4a',text:'#ead8ff',text2:'#9966cc',text3:'#553388',swatches:['#0a0514','#110a1e','#341f4a']},
+};
+function applyTheme(key){
+  const t=THEMES[key]||THEMES.dark;
+  const r=document.documentElement.style;
+  r.setProperty('--bg',t.bg);r.setProperty('--surface',t.surface);r.setProperty('--surface2',t.surface2);
+  r.setProperty('--border',t.border);r.setProperty('--border2',t.border2);
+  r.setProperty('--text',t.text);r.setProperty('--text2',t.text2);r.setProperty('--text3',t.text3);
+  localStorage.setItem(TK,key);
+  document.querySelectorAll('.theme-opt').forEach(el=>el.classList.toggle('selected',el.dataset.theme===key));
+}
+function buildThemeGrid(){
+  const cur=localStorage.getItem(TK)||'dark';
+  document.getElementById('theme-grid').innerHTML=Object.entries(THEMES).map(([k,t])=>`
+    <div class="theme-opt${k===cur?' selected':''}" data-theme="${k}" onclick="applyTheme('${k}')">
+      <div class="theme-swatch">${t.swatches.map(c=>`<span style="background:${c}"></span>`).join('')}</div>
+      <div class="theme-label">${t.label}</div>
+    </div>`).join('');
+}
+
+/* ── AUTH ── */
+async function hashPw(pw,salt='cofre_v1'){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw+'::'+salt));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function doSetup(){
+  const name=document.getElementById('s-name').value.trim();
+  const pw1=document.getElementById('s-pw1').value;
+  const pw2=document.getElementById('s-pw2').value;
+  const q=document.getElementById('s-question').value.trim();
+  const a=document.getElementById('s-answer').value.trim();
+  hideErr('setup-err');
+  if(!name){showErr('setup-err','Digite seu nome.');return}
+  if(pw1.length<6){showErr('setup-err','Senha precisa ter ao menos 6 caracteres.');return}
+  if(pw1!==pw2){showErr('setup-err','As senhas não coincidem.');return}
+  if(!q||!a){showErr('setup-err','Preencha a pergunta e a resposta de recuperação.');return}
+  const hash=await hashPw(pw1);
+  const ahash=await hashPw(a.toLowerCase().trim());
+  localStorage.setItem(MK,hash);
+  localStorage.setItem(NK,name);
+  localStorage.setItem(QK,q);
+  localStorage.setItem(AK,ahash);
+  masterKey=pw1;
+  entries=[];notes=[];
+  await saveToCloud();
+  showApp();
+  toast('Cofre criado com sucesso! 🔐');
+}
+
+async function doLogin(){
+  const pw=document.getElementById('l-pw').value;
+  hideErr('login-err');
+  const hash=await hashPw(pw);
+  if(hash!==localStorage.getItem(MK)){
+    showErr('login-err','Senha incorreta. Tente novamente.');
+    document.getElementById('l-pw').value='';return;
+  }
+  masterKey=pw;
+  await loadFromCloud();
+  showApp();
+}
+
+function doLogout(){
+  masterKey=null;entries=[];notes=[];
+  showScreen('screen-login');
+  document.getElementById('l-pw').value='';
+}
+
+/* ── RECOVER ── */
+function showRecover(){
+  const q=localStorage.getItem(QK);
+  if(!q){toast('Nenhuma pergunta secreta configurada.');return}
+  document.getElementById('rec-question-display').textContent=q;
+  document.getElementById('rec-step1').style.display='block';
+  document.getElementById('rec-step2').style.display='none';
+  hideErr('rec-err');document.getElementById('rec-ok').style.display='none';
+  document.getElementById('rec-answer').value='';
+  showScreen('screen-recover');
+}
+async function checkAnswer(){
+  const a=document.getElementById('rec-answer').value.trim().toLowerCase();
+  hideErr('rec-err');
+  if(!a){showErr('rec-err','Digite a resposta.');return}
+  const ahash=await hashPw(a);
+  if(ahash!==localStorage.getItem(AK)){showErr('rec-err','Resposta incorreta. Tente novamente.');return}
+  document.getElementById('rec-step1').style.display='none';
+  document.getElementById('rec-step2').style.display='block';
+  showOk('rec-ok','Resposta correta! Agora defina uma nova senha.');
+}
+async function doResetPassword(){
+  const pw1=document.getElementById('rec-pw1').value;
+  const pw2=document.getElementById('rec-pw2').value;
+  hideErr('rec-err');
+  if(pw1.length<6){showErr('rec-err','Senha precisa ter ao menos 6 caracteres.');return}
+  if(pw1!==pw2){showErr('rec-err','As senhas não coincidem.');return}
+  const hash=await hashPw(pw1);
+  localStorage.setItem(MK,hash);
+  toast('Senha redefinida com sucesso! ✓');
+  showScreen('screen-login');
+  document.getElementById('rec-pw1').value='';
+  document.getElementById('rec-pw2').value='';
+}
+
+/* ── SETTINGS ── */
+function showSettings(){
+  ['screen-setup','screen-login','screen-recover'].forEach(s=>document.getElementById(s).classList.remove('active'));
+  document.getElementById('screen-app').style.display='none';
+  document.getElementById('screen-app').classList.remove('active');
+  const ss=document.getElementById('screen-settings');
+  ss.style.display='flex';ss.classList.add('active');
+  document.body.style.alignItems='flex-start';
+  document.getElementById('cfg-name').value=localStorage.getItem(NK)||'';
+  ['chg-cur2','chg-new12','chg-new22'].forEach(id=>document.getElementById(id).value='');
+  hideErr('chg-err2');document.getElementById('chg-ok2').style.display='none';
+  document.getElementById('chg-fill2').style.width='0%';
+  document.getElementById('chg-lbl2').textContent='Digite uma nova senha';
+  buildThemeGrid();
+}
+function saveProfile(){
+  const name=document.getElementById('cfg-name').value.trim();
+  if(!name){toast('Digite um nome.');return}
+  localStorage.setItem(NK,name);
+  toast('Perfil salvo! ✓');
+}
+function chkStrChg2(pw){const d=strengthData(pw);document.getElementById('chg-fill2').style.width=d.w;document.getElementById('chg-fill2').style.background=d.bg;document.getElementById('chg-lbl2').textContent=d.txt}
+async function doChangePassword2(){
+  const cur=document.getElementById('chg-cur2').value;
+  const n1=document.getElementById('chg-new12').value;
+  const n2=document.getElementById('chg-new22').value;
+  hideErr('chg-err2');document.getElementById('chg-ok2').style.display='none';
+  const curHash=await hashPw(cur);
+  if(curHash!==localStorage.getItem(MK)){showErr('chg-err2','Senha atual incorreta.');return}
+  if(n1.length<6){showErr('chg-err2','Nova senha precisa ter ao menos 6 caracteres.');return}
+  if(n1!==n2){showErr('chg-err2','As novas senhas não coincidem.');return}
+  const newHash=await hashPw(n1);
+  localStorage.setItem(MK,newHash);
+  masterKey=n1;
+  await saveToCloud();
+  showOk('chg-ok2','Senha alterada com sucesso!');
+  ['chg-cur2','chg-new12','chg-new22'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ── TABS ── */
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('pane-'+tab).classList.add('active');
+  if(tab==='notes')renderNotes('');
+}
+
+/* ── ENTRIES ── */
+function addEntry(){
+  const site=document.getElementById('f-site').value.trim();
+  const user=document.getElementById('f-user').value.trim();
+  const pw=document.getElementById('f-pw').value;
+  if(!site||!pw){toast('Preencha o site e a senha.');return}
+  entries.unshift({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),site,user,pw,ts:Date.now()});
+  document.getElementById('f-site').value='';
+  document.getElementById('f-user').value='';
+  document.getElementById('f-pw').value='';
+  renderEntries('');
+  updateCount(entries.length);
+  saveToCloud();
+  toast('Senha salva! ✓');
+}
+function deleteEntry(id){
+  if(!confirm('Excluir esta senha?'))return;
+  entries=entries.filter(e=>e.id!==id);
+  visSet.delete(id);
+  renderEntries(document.querySelector('#pane-passwords .search-row input').value);
+  updateCount(entries.length);
+  saveToCloud();
+  toast('Senha excluída.');
+}
+function copyPw(id){
+  const e=entries.find(x=>x.id===id);
+  if(!e)return;
+  navigator.clipboard.writeText(e.pw).then(()=>toast('Senha copiada! 📋')).catch(()=>toast('Não foi possível copiar.'));
+}
+const visSet=new Set();
+function toggleVis(id){visSet.has(id)?visSet.delete(id):visSet.add(id);renderEntries(document.querySelector('#pane-passwords .search-row input').value)}
+function startEdit(id){
+  const e=entries.find(x=>x.id===id);if(!e)return;
+  const row=document.getElementById('row-'+id);if(!row)return;
+  row.innerHTML=`
+    <div class="avatar">${h(e.site).slice(0,2).toUpperCase()}</div>
+    <div class="edit-inputs">
+      <input type="text" id="ed-site-${id}" value="${h(e.site)}" placeholder="Site">
+      <input type="text" id="ed-user-${id}" value="${h(e.user)}" placeholder="Usuário">
+      <input type="text" id="ed-pw-${id}" value="${h(e.pw)}" placeholder="Senha">
+    </div>
+    <div class="entry-btns" style="flex-direction:column">
+      <button class="ic-btn" onclick="confirmEdit('${id}')" title="Salvar" style="color:#4caf80;border-color:#4caf8033">✓</button>
+      <button class="ic-btn" onclick="renderEntries(document.querySelector('#pane-passwords .search-row input').value)" title="Cancelar">✕</button>
+    </div>`;
+}
+function confirmEdit(id){
+  const site=document.getElementById('ed-site-'+id).value.trim();
+  const user=document.getElementById('ed-user-'+id).value.trim();
+  const pw=document.getElementById('ed-pw-'+id).value;
+  if(!site||!pw){toast('Site e senha são obrigatórios.');return}
+  const idx=entries.findIndex(e=>e.id===id);if(idx<0)return;
+  entries[idx]={...entries[idx],site,user,pw,ts:Date.now()};
+  renderEntries(document.querySelector('#pane-passwords .search-row input').value);
+  saveToCloud();
+  toast('Atualizado! ✓');
+}
+function renderEntries(q=''){
+  const filtered=q?entries.filter(e=>e.site.toLowerCase().includes(q.toLowerCase())||e.user.toLowerCase().includes(q.toLowerCase())):entries;
+  const list=document.getElementById('entries-list');
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty"><div class="empty-ico">🔒</div><p>${entries.length?'Nenhuma senha encontrada para essa busca.':'Nenhuma senha salva ainda.<br>Adicione a primeira acima.'}</p></div>`;return;
+  }
+  list.innerHTML=filtered.map(e=>{
+    const vis=visSet.has(e.id);
+    const pwShow=vis?h(e.pw):'••••••••••••';
+    const initials=e.site.trim().slice(0,2).toUpperCase()||'??';
+    return`<div class="entry" id="row-${e.id}">
+      <div class="avatar">${initials}</div>
+      <div class="entry-info">
+        <div class="entry-site">${h(e.site)}</div>
+        <div class="entry-user">${h(e.user)||'<span style="color:var(--text3)">sem usuário</span>'}</div>
+        <div class="entry-pw ${vis?'shown':''}">${pwShow}</div>
+      </div>
+      <div class="entry-btns">
+        <button class="ic-btn" onclick="toggleVis('${e.id}')" title="${vis?'Ocultar':'Mostrar'}">${vis?'🙈':'👁'}</button>
+        <button class="ic-btn" onclick="copyPw('${e.id}')" title="Copiar">📋</button>
+        <button class="ic-btn" onclick="startEdit('${e.id}')" title="Editar">✏️</button>
+        <button class="ic-btn del" onclick="deleteEntry('${e.id}')" title="Excluir">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── NOTES ── */
+function addNote(){
+  const title=document.getElementById('n-title').value.trim();
+  const body=document.getElementById('n-body').value.trim();
+  if(!title&&!body){toast('Preencha o título ou o conteúdo.');return}
+  notes.unshift({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:title||'Sem título',body,ts:Date.now()});
+  document.getElementById('n-title').value='';
+  document.getElementById('n-body').value='';
+  renderNotes('');
+  saveToCloud();
+  toast('Nota salva! ✓');
+}
+function deleteNote(id){
+  if(!confirm('Excluir esta nota?'))return;
+  notes=notes.filter(n=>n.id!==id);
+  expandedNotes.delete(id);
+  renderNotes(document.querySelector('#pane-notes .search-row input').value);
+  saveToCloud();
+  toast('Nota excluída.');
+}
+function copyNote(id){
+  const n=notes.find(x=>x.id===id);
+  if(!n)return;
+  navigator.clipboard.writeText(n.body).then(()=>toast('Conteúdo copiado! 📋')).catch(()=>toast('Não foi possível copiar.'));
+}
+const expandedNotes=new Set();
+function toggleNoteExpand(id){expandedNotes.has(id)?expandedNotes.delete(id):expandedNotes.add(id);renderNotes(document.querySelector('#pane-notes .search-row input').value)}
+function startEditNote(id){
+  const n=notes.find(x=>x.id===id);if(!n)return;
+  const row=document.getElementById('nrow-'+id);if(!row)return;
+  row.innerHTML=`
+    <div class="note-avatar">📝</div>
+    <div class="note-edit-area">
+      <input type="text" id="en-title-${id}" value="${h(n.title)}" placeholder="Título">
+      <textarea id="en-body-${id}" rows="4">${h(n.body)}</textarea>
+    </div>
+    <div class="note-btns" style="flex-direction:column">
+      <button class="ic-btn" onclick="confirmEditNote('${id}')" title="Salvar" style="color:#4caf80;border-color:#4caf8033">✓</button>
+      <button class="ic-btn" onclick="renderNotes(document.querySelector('#pane-notes .search-row input').value)" title="Cancelar">✕</button>
+    </div>`;
+}
+function confirmEditNote(id){
+  const title=document.getElementById('en-title-'+id).value.trim();
+  const body=document.getElementById('en-body-'+id).value.trim();
+  if(!title&&!body){toast('Título ou conteúdo são obrigatórios.');return}
+  const idx=notes.findIndex(n=>n.id===id);if(idx<0)return;
+  notes[idx]={...notes[idx],title:title||'Sem título',body,ts:Date.now()};
+  renderNotes(document.querySelector('#pane-notes .search-row input').value);
+  saveToCloud();
+  toast('Nota atualizada! ✓');
+}
+function renderNotes(q=''){
+  const filtered=q?notes.filter(n=>n.title.toLowerCase().includes(q.toLowerCase())||n.body.toLowerCase().includes(q.toLowerCase())):notes;
+  const list=document.getElementById('notes-list');
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty"><div class="empty-ico">📝</div><p>${notes.length?'Nenhuma nota encontrada.':'Nenhuma nota salva ainda.<br>Adicione a primeira acima.'}</p></div>`;return;
+  }
+  list.innerHTML=filtered.map(n=>{
+    const exp=expandedNotes.has(n.id);
+    return`<div class="note-entry" id="nrow-${n.id}">
+      <div class="note-avatar">📝</div>
+      <div class="note-info" onclick="toggleNoteExpand('${n.id}')" style="cursor:pointer">
+        <div class="note-title">${h(n.title)}</div>
+        <div class="note-preview ${exp?'expanded':''}">${h(n.body)||'<em style="color:var(--text3)">sem conteúdo</em>'}</div>
+      </div>
+      <div class="note-btns">
+        <button class="ic-btn" onclick="copyNote('${n.id}')" title="Copiar conteúdo">📋</button>
+        <button class="ic-btn" onclick="startEditNote('${n.id}')" title="Editar">✏️</button>
+        <button class="ic-btn del" onclick="deleteNote('${n.id}')" title="Excluir">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── UTILS ── */
+function genPw(){
+  const chars='abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';
+  let pw='';for(let i=0;i<18;i++)pw+=chars[Math.floor(Math.random()*chars.length)];
+  const inp=document.getElementById('f-pw');inp.value=pw;inp.type='text';
+  toast('Senha forte gerada! 🎲');
+}
+function h(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function toast(msg,dur=2300){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),dur);
+}
+function toggleEye(id,btn){
+  const inp=document.getElementById(id);
+  const vis=inp.type==='text';
+  inp.type=vis?'password':'text';
+  btn.textContent=vis?'👁':'🙈';
+}
+function strengthData(pw){
+  let s=0;
+  if(pw.length>=8)s++;if(pw.length>=12)s++;
+  if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^a-zA-Z0-9]/.test(pw))s++;
+  const levels=[
+    {w:'0%',bg:'#e05555',txt:'Muito fraca'},{w:'25%',bg:'#e05555',txt:'Fraca'},
+    {w:'50%',bg:'#c09030',txt:'Razoável'},{w:'75%',bg:'#888',txt:'Boa'},{w:'100%',bg:'#4caf80',txt:'Forte ✓'},
+  ];
+  return pw?levels[Math.min(s,4)]:{w:'0%',bg:'#e05555',txt:'Digite uma senha para ver a força'};
+}
+function chkStr(pw){const d=strengthData(pw);document.getElementById('s-fill').style.width=d.w;document.getElementById('s-fill').style.background=d.bg;document.getElementById('s-lbl').textContent=d.txt}
+function chkStrRec(pw){const d=strengthData(pw);document.getElementById('rec-fill').style.width=d.w;document.getElementById('rec-fill').style.background=d.bg;document.getElementById('rec-lbl').textContent=d.txt}
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block'}
+function hideErr(id){document.getElementById(id).style.display='none'}
+function showOk(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block'}
+function updateCount(n){document.getElementById('app-count').textContent=n+(n===1?' senha':' senhas')}
+
+function showScreen(id){
+  ['screen-setup','screen-login','screen-recover'].forEach(s=>{
+    const el=document.getElementById(s);el.classList.remove('active');el.style.display='';
+  });
+  document.getElementById('screen-app').style.display='none';
+  document.getElementById('screen-app').classList.remove('active');
+  const el=document.getElementById(id);el.classList.add('active');
+  document.body.style.alignItems='center';
+}
+function showApp(){
+  ['screen-setup','screen-login','screen-recover'].forEach(s=>document.getElementById(s).classList.remove('active'));
+  const ss=document.getElementById('screen-settings');ss.style.display='none';ss.classList.remove('active');
+  const app=document.getElementById('screen-app');
+  app.style.display='flex';app.classList.add('active');
+  document.body.style.alignItems='flex-start';
+  renderEntries();renderNotes();
+  updateCount(entries.length);
+}
+
+/* ── INIT ── */
+(function init(){
+  applyTheme(localStorage.getItem(TK)||'dark');
+  const hasMaster=!!localStorage.getItem(MK);
+  if(!hasMaster){showScreen('screen-setup')}
+  else{
+    const name=localStorage.getItem(NK)||'';
+    if(name){document.getElementById('login-title').textContent='Olá, '+name+' 👋'}
+    showScreen('screen-login');
+    setTimeout(()=>document.getElementById('l-pw').focus(),100);
+  }
+})();
+</script>
