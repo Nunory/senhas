@@ -161,6 +161,7 @@ textarea:focus{border-color:var(--white)}
 .tb-gear{width:30px;height:30px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text3)}
 .tb-gear:hover{background:var(--surface2);color:var(--text)}
 .tb-avatar{width:30px;height:30px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);overflow:hidden;flex-shrink:0}
+.tb-avatar img{width:100%;height:100%;object-fit:cover;border-radius:8px}
 .profile-pic-wrap{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
 .profile-pic-big{width:72px;height:72px;border-radius:18px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;flex-shrink:0}
 .profile-pic-big img{width:100%;height:100%;object-fit:cover;border-radius:18px}
@@ -404,11 +405,6 @@ textarea:focus{border-color:var(--white)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 <script>
-const TK='cofre_theme';
-const MK='cofre_master';
-const NK='cofre_name';
-const QK='cofre_question';
-const AK='cofre_answer';
 const PIC='cofre_pic';
 
 function handlePicUpload(e){
